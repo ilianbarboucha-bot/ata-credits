@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  EMAIL_MAGIC_LINK
+  GOOGLE_MOCK
+}
+
+enum BalanceBucket {
+  AVAILABLE
+  PENDING
+}
+
+enum LedgerEntryType {
+  AD_PENDING_CREDIT
+  AD_CONFIRMED_CREDIT
+  AD_REJECTED
+  AI_REQUEST_RESERVE
+  AI_REQUEST_CAPTURE
+  AI_REQUEST_REFUND
+  MANUAL_ADJUSTMENT
+  WELCOME_BONUS
+}
+
+enum ImpressionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  SUSPICIOUS
+}
+
+enum AiRoute {
+  SPONSORED
+  OFFICIAL
+}
+
+enum AiRequestStatus {
+  PROCESSING
+  SUCCESS
+  REJECTED
+  FAILED
+}
+
+enum TokenOptimizationMode {
+  RECOMMENDED
+  CONSERVATIVE
+  OFF
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  wallet        Wallet?
+  settings      UserSettings?
+  aiRequests    AiRequest[]
+  adImpressions AdImpression[]
+  adClicks      AdClick[]
+  ledgerEntries CreditLedger[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String       @id @default(cuid())
+  token     String       @unique
+  provider  AuthProvider
+  userId    String
+  createdAt DateTime     @default(now())
+  expiresAt DateTime?
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("sessions")
+}
+
+model Wallet {
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries CreditLedger[]
+
+  @@map("wallets")
+}
+
+model CreditLedger {
+  id            String          @id @default(cuid())
+  walletId      String
+  userId        String
+  type          LedgerEntryType
+  balanceBucket BalanceBucket
+  amountCents   Int
+  description   String?
+  impressionId  String?
+  aiRequestId   String?
+  metadataJson  String?
+  settledAt     DateTime?
+  createdAt     DateTime        @default(now())
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, balanceBucket, settledAt])
+  @@index([userId, type, createdAt])
+  @@index([impressionId])
+  @@index([aiRequestId])
+  @@map("credit_ledger")
+}
+
+model SponsorCampaign {
+  id                 String         @id
+  providerName       String
+  name               String
+  headline           String
+  body               String
+  cta                String
+  href               String
+  sponsoredBy        String
+  active             Boolean        @default(true)
+  priority           Int            @default(0)
+  defaultCreditCents Int
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  impressions        AdImpression[]
+  clicks             AdClick[]
+
+  @@map("sponsor_campaigns")
+}
+
+model AdImpression {
+  id           String           @id @default(cuid())
+  userId       String
+  campaignId   String
+  providerName String
+  adId         String
+  placement    String
+  sessionId    String
+  headline     String
+  creditCents  Int
+  status       ImpressionStatus
+  fraudReason  String?
+  validatedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign     SponsorCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("ad_impressions")
+}
+
+model AdClick {
+  id           String           @id @default(cuid())
+  userId       String
+  campaignId   String
+  providerName String
+  adId         String
+  href         String
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign     SponsorCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ad_clicks")
+}
+
+model AiRequest {
+  id                 String           @id @default(cuid())
+  userId             String
+  route              AiRoute
+  status             AiRequestStatus
+  model              String
+  promptDigest       String
+  promptPreview      String
+  responsePreview    String?
+  metadataJson       String?
+  originalTokens     Int
+  optimizedTokens    Int
+  estimatedCostCents Int
+  reservedCostCents  Int
+  actualCostCents    Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("ai_requests")
+}
+
+model UserSettings {
+  id                              String                @id @default(cuid())
+  userId                          String                @unique
+  tokenOptimizationMode           TokenOptimizationMode @default(RECOMMENDED)
+  country                         String                @default("unknown")
+  adsEnabled                      Boolean               @default(true)
+  minSponsoredBalanceCents        Int                   @default(50)
+  safetyMarginPercent             Float                 @default(0.35)
+  maxSponsoredCostPerRequestCents Int                   @default(20)
+  createdAt                       DateTime              @default(now())
+  updatedAt                       DateTime              @updatedAt
+  user                            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}

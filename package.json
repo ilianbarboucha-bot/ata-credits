@@ -1,0 +1,29 @@
+{
+  "name": "ata-credits-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/vscode-extension",
+    "packages/shared",
+    "packages/ad-providers",
+    "packages/token-optimizer"
+  ],
+  "scripts": {
+    "prisma:generate": "prisma generate --schema ./prisma/schema.prisma",
+    "db:push": "node --disable-warning=ExperimentalWarning ./scripts/db-push.mjs",
+    "build": "npm run prisma:generate && npm --workspace @atacredits/shared run build && npm --workspace @atacredits/ad-providers run build && npm --workspace @atacredits/token-optimizer run build && npm --workspace @atacredits/backend run build && npm --workspace ata-credits run build",
+    "typecheck": "npm run prisma:generate && npm --workspace @atacredits/shared run typecheck && npm --workspace @atacredits/ad-providers run typecheck && npm --workspace @atacredits/token-optimizer run typecheck && npm --workspace @atacredits/backend run typecheck && npm --workspace ata-credits run typecheck",
+    "dev:backend": "npm --workspace @atacredits/backend run dev",
+    "dev:extension": "npm --workspace ata-credits run watch",
+    "test:backend": "npm run prisma:generate && npm --workspace @atacredits/backend run test",
+    "package:extension": "npm --workspace ata-credits run package",
+    "verify:smoke": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-smoke.ps1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "playwright": "^1.61.0",
+    "prisma": "^6.10.1",
+    "typescript": "^5.8.3"
+  }
+}

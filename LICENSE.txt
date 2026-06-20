@@ -1,0 +1,7 @@
+ATA Credits MVP
+Copyright (c) 2026
+All rights reserved.
+
+This repository is an internal MVP snapshot.
+No license is granted to copy, modify, distribute, sublicense, or use this
+software except with prior written permission from the repository owner.

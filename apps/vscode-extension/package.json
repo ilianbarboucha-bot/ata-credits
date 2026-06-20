@@ -1,0 +1,83 @@
+{
+  "name": "ata-credits",
+  "displayName": "ATA Credits",
+  "version": "0.1.0",
+  "publisher": "atacredits",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:ataCredits.sidebar"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ataCredits",
+          "title": "ATA Credits",
+          "icon": "media/ata-credits.svg"
+        }
+      ]
+    },
+    "views": {
+      "ataCredits": [
+        {
+          "id": "ataCredits.sidebar",
+          "name": "Dashboard",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ataCredits.login",
+        "title": "ATA Credits: Login"
+      },
+      {
+        "command": "ataCredits.logout",
+        "title": "ATA Credits: Logout"
+      },
+      {
+        "command": "ataCredits.refresh",
+        "title": "ATA Credits: Refresh Dashboard"
+      },
+      {
+        "command": "ataCredits.runPrompt",
+        "title": "ATA Credits: Run Prompt"
+      },
+      {
+        "command": "ataCredits.validateCredits",
+        "title": "ATA Credits: Validate Credits"
+      }
+    ],
+    "configuration": {
+      "title": "ATA Credits",
+      "properties": {
+        "ataCredits.apiBaseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8787",
+          "description": "Base URL of the ATA Credits backend."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "watch": "node ./scripts/build.mjs --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "package": "npm run build && node -e \"require('fs').mkdirSync('../../output',{recursive:true})\" && npx @vscode/vsce package --no-dependencies --allow-missing-repository --out ../../output/ata-credits.vsix"
+  },
+  "dependencies": {
+    "@atacredits/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  }
+}
